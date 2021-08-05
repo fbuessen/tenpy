@@ -1490,8 +1490,17 @@ class TwoSiteDMRGEngine(DMRGEngine):
         if self.mixer is None:
             # simple case: real svd, defined elsewhere.
             qtotal_i0 = self.env.bra.get_B(i0, form=None).qtotal
+
+            # set local maximum bond dimension
+            trunc_params_local = self.trunc_params.copy()
+            if "chi_max" in trunc_params_local and type(trunc_params_local["chi_max"]) == list:
+                if len(trunc_params_local["chi_max"]) != len(self.psi.chi):
+                    raise ValueError("Length of chi_max must equal the number of nontrivial bonds")
+                trunc_params_local["chi_max"] = trunc_params_local["chi_max"][self.psi._to_valid_index(self.i0)]
+            #print("update at bond %d, local chi_max is %d" % (self.i0, trunc_params_local["chi_max"]))
+
             U, S, VH, err, _ = svd_theta(theta,
-                                         self.trunc_params,
+                                         trunc_params_local,
                                          qtotal_LR=[qtotal_i0, None],
                                          inner_labels=['vR', 'vL'])
             return U, S, VH, err
